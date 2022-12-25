@@ -11,7 +11,7 @@
         android:layout_width="180dp"
         android:layout_height="46dp"
         android:gravity="center"
-        android:text="Welcome to"
+        android:text="@string/welcome_to"
         android:textSize="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,7 +25,7 @@
         android:layout_width="285dp"
         android:layout_height="56dp"
         android:gravity="center"
-        android:text="GeoLive Picker!"
+        android:text="@string/geolive_picker"
         android:textSize="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/textView"
@@ -35,11 +35,11 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/chooseLocation"
         android:layout_width="281dp"
-        android:layout_height="45dp"
+        android:layout_height="48dp"
         android:layout_marginTop="328dp"
-        android:text="choose location"
+        android:text="@string/choose_location"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/textView2"
         app:layout_constraintStart_toStartOf="@+id/textView2"
@@ -47,24 +47,24 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/showAreas"
         android:layout_width="281dp"
-        android:layout_height="45dp"
+        android:layout_height="48dp"
         android:layout_marginTop="28dp"
-        android:text="show entered areas"
-        app:layout_constraintEnd_toEndOf="@+id/button"
+        android:text="@string/show_entered_areas"
+        app:layout_constraintEnd_toEndOf="@+id/chooseLocation"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/button"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+        app:layout_constraintStart_toStartOf="@+id/chooseLocation"
+        app:layout_constraintTop_toBottomOf="@+id/chooseLocation" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/stopButton"
         android:layout_width="281dp"
-        android:layout_height="45dp"
+        android:layout_height="48dp"
         android:layout_marginTop="28dp"
-        android:text="stop stracking"
-        app:layout_constraintEnd_toEndOf="@+id/button2"
+        android:text="@string/stop_stracking"
+        app:layout_constraintEnd_toEndOf="@+id/showAreas"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/button2"
-        app:layout_constraintTop_toBottomOf="@+id/button2" />
+        app:layout_constraintStart_toStartOf="@+id/showAreas"
+        app:layout_constraintTop_toBottomOf="@+id/showAreas" />
 </androidx.constraintlayout.widget.ConstraintLayout>
