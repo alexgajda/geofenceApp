@@ -3,4 +3,7 @@
     <string name="welcome_to">Welcome to</string>
     <string name="geolive_picker">GeoLive Picker!</string>
     <string name="choose_location">choose location</string>
+    <string name="start">Start</string>
+    <string name="cancel">Cancel</string>
+    <string name="press_here_to_choose_locations">Press here to choose locations</string>
 </resources>

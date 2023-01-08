@@ -5,4 +5,9 @@
     <string name="choose_location">choose location</string>
     <string name="show_entered_areas">show entered areas</string>
     <string name="stop_stracking">stop stracking</string>
+    <string name="title_activity_map">mapActivity</string>
+    <string name="start">Start</string>
+    <string name="cancel">Cancel</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="press_here_to_choose_locations">Press here to choose locations</string>
 </resources>
