@@ -8,6 +8,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 @Entity(tableName = "locations_table")
 public class Locations {
+
     @PrimaryKey(autoGenerate = true)
     public int id;
 

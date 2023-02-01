@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -36,16 +35,17 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent1);
         });
 
+        //stop tracking button
         Button stopTracking = findViewById(R.id.stopButton);
-        stopTracking.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(getApplicationContext(), "Service Stopped Successfully!", Toast.LENGTH_SHORT).show();
-
-
-
+        stopTracking.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, LocationService.class);
+            if (!stopService(intent)) {
+                Toast.makeText(getApplicationContext(), "No Service Running!", Toast.LENGTH_SHORT).show();
+            } else {
+                stopService(new Intent(MainActivity.this, LocationService.class));
             }
         });
 
     }
+
 }

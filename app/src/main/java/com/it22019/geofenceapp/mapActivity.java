@@ -1,18 +1,14 @@
 package com.it22019.geofenceapp;
 
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -28,7 +24,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -45,7 +40,7 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private static final String TAG = mapActivity.class.getSimpleName();
     private GoogleMap map;
-    private static int session = 0;
+    private static int sessions;
 
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -66,53 +61,21 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final String KEY_LOCATION = "location";
 
 
-
-
     @Override
     public void onBackPressed() {
         // Do nothing
         //back button of device's disabled
     }
 
-    private static final int FINE_LOCATION_PERMISSION_REQUEST = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-
-
-
-
-        //in class code
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_PERMISSION_REQUEST);
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 5, new LocationListener() {
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
-                Log.d("location", location.toString());
-            }
-        });
-
-
-
-
-
         // Retrieve location and camera position from saved instance state.
         if (savedInstanceState != null) {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
-            CameraPosition cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
 
 
@@ -128,8 +91,7 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-        // [END maps_current_place_map_fragment]
-        // [END_EXCLUDE]
+
     }
 
     /**
@@ -167,31 +129,28 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
         //list with circle objects
         List<Circle> circles = new ArrayList<>();
 
-        map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
-            @Override
-            public void onMapLongClick(@NonNull LatLng latLng) {
-                boolean circleRemoved = false;
-                // Iterate through the list of circles
-                for (Circle circle : circles) {
-                    // Calculate the distance between the long press location and the center of the circle
-                    float distance = (float) SphericalUtil.computeDistanceBetween(latLng, circle.getCenter());
-                    // If the distance is less than the radius of the circle, remove the circle from the map
-                    if (distance < circle.getRadius()) {
-                        circle.remove();
-                        circles.remove(circle);
-                        circleRemoved = true;
-                        break;
-                    }
+        map.setOnMapLongClickListener(latLng -> {
+            boolean circleRemoved = false;
+            // Iterate through the list of circles
+            for (Circle circle : circles) {
+                // Calculate the distance between the long press location and the center of the circle
+                float distance = (float) SphericalUtil.computeDistanceBetween(latLng, circle.getCenter());
+                // If the distance is less than the radius of the circle, remove the circle from the map
+                if (distance < circle.getRadius()) {
+                    circle.remove();
+                    circles.remove(circle);
+                    circleRemoved = true;
+                    break;
                 }
+            }
 
-                // Only add a new circle if none of the existing circles were removed
-                if (!circleRemoved) {
-                    circles.add(map.addCircle(new CircleOptions()
-                            .center(latLng)
-                            .radius(100)
-                            .strokeColor(Color.RED)
-                            .visible(true)));
-                }
+            // Only add a new circle if none of the existing circles were removed
+            if (!circleRemoved) {
+                circles.add(map.addCircle(new CircleOptions()
+                        .center(latLng)
+                        .radius(100)
+                        .strokeColor(Color.RED)
+                        .visible(true)));
             }
         });
 
@@ -213,38 +172,39 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
             startActivity(intent);
         });
 
+
         LocationsDatabase db = Room.databaseBuilder(getApplicationContext(),LocationsDatabase.class,"locations_table").build();
         LocationsDao locationsDao = db.locationsDao();
         Locations locations = new Locations();
 
         Button start = findViewById(R.id.startButton);
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                session++;
-                if (circles.size() >= 1){
-                    for (Circle circle : circles) {
-                        locations.session = session;
-                        locations.center = circle.getCenter();
-                        new Thread(new Runnable() {
-                            @Override
+        start.setOnClickListener(view -> {
 
-                            public void run() {
-                                locationsDao.insertLocation(locations);
-                                locationsDao.getAll();
+            SharedPreferences prefs = getSharedPreferences("pref", Context.MODE_PRIVATE);
+            int sessions = prefs.getInt("sessions1", 0); // retrieving value from shared preferences
 
-                            }
-                        }).start();
+            Log.d("mpika", String.valueOf(sessions));
 
-                    }
-                    Intent intent = new Intent(mapActivity.this, MainActivity.class);
-                    Toast.makeText(getApplicationContext(), "Locations Saved Successfully!", Toast.LENGTH_SHORT).show();
-                    startActivity(intent);
+
+            if (circles.size() >= 1){
+                for (Circle circle : circles) {
+                    locations.session = sessions;
+                    locations.center = circle.getCenter();
+                    new Thread(() -> locationsDao.insertLocation(locations)).start();
+
                 }
-                else{
-                    //make a toast if user pressed button without choosing any location
-                    Toast.makeText(getApplicationContext(), "Please select at least 1 location!", Toast.LENGTH_SHORT).show();
-                }
+
+                Intent intent1 = new Intent(mapActivity.this, LocationService.class);
+                startService(intent1);
+
+
+                Intent intent = new Intent(mapActivity.this, MainActivity.class);
+                Toast.makeText(getApplicationContext(), "Locations Saved Successfully!", Toast.LENGTH_SHORT).show();
+                startActivity(intent);
+            }
+            else{
+                //make a toast if user pressed button without choosing any location
+                Toast.makeText(getApplicationContext(), "Please select at least 1 location!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -347,6 +307,12 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
     }
 
 }

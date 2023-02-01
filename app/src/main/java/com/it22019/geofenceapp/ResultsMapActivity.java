@@ -22,14 +22,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -57,7 +55,7 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
     private static final String KEY_LOCATION = "location";
 
     private List<LatLng> loc;
-
+    private List<LatLng> newLoc;
 
 
     @Override
@@ -66,15 +64,23 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         //back button of device's disabled
     }
 
-    private static final int FINE_LOCATION_PERMISSION_REQUEST = 4;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_results_map);
+        LocationService locationService = new LocationService();
+        newLoc = locationService.getNewLocations();
 
 
+
+        new Thread(() -> {
+            LocationsDatabase db = Room.databaseBuilder(getApplicationContext(),
+                    LocationsDatabase.class, "locations_table").build();
+            LocationsDao locationsDao = db.locationsDao();
+            loc = locationsDao.getLocationBySession();
+            db.close();
+        }).start();
 
         //home button to main
         Button back = findViewById(R.id.backToMain);
@@ -82,19 +88,6 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
             Intent intent = new Intent(ResultsMapActivity.this, MainActivity.class);
             startActivity(intent);
         });
-
-        LocationsDatabase db = Room.databaseBuilder(getApplicationContext(),LocationsDatabase.class, "locations_table").build();
-        LocationsDao locationsDao = db.locationsDao();
-
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                loc = locationsDao.getLocations();
-            }
-        }).start();
-
 
 
         // Retrieve location and camera position from saved instance state.
@@ -110,14 +103,14 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
+
+
         // Build the map.
-        // [START maps_current_place_map_fragment]
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-        // [END maps_current_place_map_fragment]
-        // [END_EXCLUDE]
+
     }
 
     /**
@@ -138,7 +131,7 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
      * This callback is triggered when the map is ready to be used.
      */
     @Override
-    public void onMapReady(GoogleMap Mmap) {
+    public void onMapReady(@NonNull GoogleMap Mmap) {
         this.Mmap = Mmap;
 
 
@@ -151,19 +144,18 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        Iterator<LatLng> iterator = loc.iterator();
-        while(iterator.hasNext()){
-            LatLng center = iterator.next();
-            CircleOptions circleOptions = new CircleOptions()
-                    .center(center)
-                    .radius(100) // radius in meters
-                    .strokeColor(Color.RED);
-            Circle circle = Mmap.addCircle(circleOptions);
-        }
 
 
+
+                for (LatLng center : loc) {
+                    Mmap.addCircle(new CircleOptions()
+                            .center(center)
+                            .radius(100) // radius in meters
+                            .strokeColor(Color.RED));
+                }
 
     }
+
 
 
 
