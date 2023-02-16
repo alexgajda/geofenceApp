@@ -172,32 +172,33 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
             startActivity(intent);
         });
 
-
+        //database builder
         LocationsDatabase db = Room.databaseBuilder(getApplicationContext(),LocationsDatabase.class,"locations_table").build();
         LocationsDao locationsDao = db.locationsDao();
-        Locations locations = new Locations();
 
+        //start button that stores the centers and starts service
         Button start = findViewById(R.id.startButton);
         start.setOnClickListener(view -> {
 
+            //stores current session
             SharedPreferences prefs = getSharedPreferences("pref", Context.MODE_PRIVATE);
             int sessions = prefs.getInt("sessions1", 0); // retrieving value from shared preferences
 
-            Log.d("mpika", String.valueOf(sessions));
-
-
+            //if there is at least 1 circle that has been added by user
             if (circles.size() >= 1){
                 for (Circle circle : circles) {
-                    locations.session = sessions;
-                    locations.center = circle.getCenter();
-                    new Thread(() -> locationsDao.insertLocation(locations)).start();
-
+                    //stores centers
+                    Locations locations1 = new Locations();
+                    locations1.session = sessions;
+                    locations1.center = circle.getCenter();
+                    new Thread(() -> locationsDao.insertLocation(locations1)).start();
                 }
 
+                //starts service with intent
                 Intent intent1 = new Intent(mapActivity.this, LocationService.class);
                 startService(intent1);
 
-
+                //goes back to main
                 Intent intent = new Intent(mapActivity.this, MainActivity.class);
                 Toast.makeText(getApplicationContext(), "Locations Saved Successfully!", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
@@ -312,7 +313,6 @@ public class mapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 
 }

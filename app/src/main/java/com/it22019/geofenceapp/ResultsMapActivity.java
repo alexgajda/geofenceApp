@@ -8,6 +8,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,8 +27,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
+import com.google.maps.android.SphericalUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -72,13 +73,13 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         LocationService locationService = new LocationService();
         newLoc = locationService.getNewLocations();
 
-
-
+        //new thread
         new Thread(() -> {
             LocationsDatabase db = Room.databaseBuilder(getApplicationContext(),
                     LocationsDatabase.class, "locations_table").build();
             LocationsDao locationsDao = db.locationsDao();
-            loc = locationsDao.getLocationBySession();
+            //gets last session's location
+            loc = locationsDao.getLocationsInLastSession();
             db.close();
         }).start();
 
@@ -103,6 +104,22 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
+        //PAUSE RESUME Button
+        Button pauseResumeButton = findViewById(R.id.pauseResumeButton);
+        pauseResumeButton.setOnClickListener(view -> {
+            Intent intent = new Intent(ResultsMapActivity.this, LocationService.class);
+            if (stopService(intent)) {
+                if (locationService.isPaused()) {
+                    //locationService.resumeService();
+                    Toast.makeText(getApplicationContext(), "LOCATION RESUMED", Toast.LENGTH_SHORT).show();
+                } else {
+                    //locationService.pauseService();
+                    Toast.makeText(getApplicationContext(), "LOCATION PAUSED", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "No service running", Toast.LENGTH_SHORT).show();
+            }
+        });
 
 
         // Build the map.
@@ -123,6 +140,7 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
             outState.putParcelable(KEY_LOCATION, lastKnownLocation);
         }
         super.onSaveInstanceState(outState);
+
     }
 
 
@@ -134,7 +152,6 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
     public void onMapReady(@NonNull GoogleMap Mmap) {
         this.Mmap = Mmap;
 
-
         // Prompt the user for permission.
         getLocationPermission();
 
@@ -144,15 +161,29 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-
-
-
-                for (LatLng center : loc) {
+        for (LatLng location : loc) {
+            boolean theSame = false;
+            for (LatLng location2 : newLoc){
+                //if they touch radius 100
+                if (SphericalUtil.computeDistanceBetween(location, location2) <= 100) {
+                    theSame = true;
+                    //print the location in green that the user has gone
                     Mmap.addCircle(new CircleOptions()
-                            .center(center)
-                            .radius(100) // radius in meters
-                            .strokeColor(Color.RED));
+                                .center(location)
+                                .radius(100) // radius in meters
+                                .strokeColor(Color.RED)
+                                .fillColor(Color.BLUE));
+                    break;
                 }
+            }
+            //jusr print the location
+            if (!theSame) {
+                Mmap.addCircle(new CircleOptions()
+                        .center(location)
+                        .radius(100) // radius in meters
+                        .strokeColor(Color.RED));
+            }
+        }
 
     }
 

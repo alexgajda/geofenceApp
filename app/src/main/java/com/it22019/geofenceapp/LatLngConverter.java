@@ -11,6 +11,7 @@ import androidx.room.TypeConverter;
 
 import com.google.android.gms.maps.model.LatLng;
 
+//converts latitude and longtitude to LatLng
 public class LatLngConverter {
     @TypeConverter
     public static LatLng fromString(String value) {
