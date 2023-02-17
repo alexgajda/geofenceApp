@@ -98,8 +98,6 @@ public class ResultsMapActivity extends AppCompatActivity implements OnMapReadyC
         }
 
 
-        // Construct a PlacesClient
-        Places.initialize(getApplicationContext(), BuildConfig.MAPS_API_KEY);
 
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
